@@ -141,4 +141,4 @@ if __name__ == "__main__":
         # 4. PRINT EXACTLY MATCHING THE FORMAT
         # The grader compares these lines character-for-character
         print(f"Deciphered Plaintext: {plaintext}")
-        print(f"Deciphered Key: {key_string}")
+        print(f"Deciphered Key: {key_string}",end='')
