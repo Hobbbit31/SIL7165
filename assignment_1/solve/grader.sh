@@ -20,7 +20,7 @@ fi
 
 passed=0
 
-for i in {1..3}; do
+for i in {1..6}; do
     in="$INPUT_DIR/input-$i.txt"
     ans="$ANSWER_DIR/answer-$i.txt"
     out="output-$i.txt"
@@ -32,4 +32,4 @@ for i in {1..3}; do
     diff -q "$out" "$ans" >/dev/null && ((passed++))
 done
 
-echo "$passed/3"
+echo "$passed/6"
