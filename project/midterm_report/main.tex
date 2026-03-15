@@ -1,21 +1,58 @@
-\documentclass[9pt,a4paper]{article}
+\documentclass[10pt,a4paper]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[margin=1in]{geometry}
 \usepackage{graphicx}
-\usepackage{hyperref}
 \usepackage{booktabs}
 \usepackage{amsmath}
 \usepackage{cite}
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{float}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usepackage{colortbl}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage[hidelinks]{hyperref}
 
+% ── Color palette ──
+\definecolor{primary}{HTML}{1B4F72}
+\definecolor{accent}{HTML}{2E86C1}
+\definecolor{success}{HTML}{27AE60}
+\definecolor{danger}{HTML}{E74C3C}
+\definecolor{rowgray}{HTML}{F2F4F5}
+\definecolor{codebg}{HTML}{F8F9FA}
+
+% ── Listings style ──
 \lstset{
     basicstyle=\ttfamily\small,
     breaklines=true,
     frame=single,
-    backgroundcolor=\color{gray!10}
+    rulecolor=\color{accent!40},
+    backgroundcolor=\color{codebg},
+    keywordstyle=\color{primary}\bfseries,
+    commentstyle=\color{gray},
+    stringstyle=\color{success},
+    xleftmargin=1em,
+    framexleftmargin=0.5em
 }
+
+% ── Section styling ──
+\usepackage{titlesec}
+\titleformat{\section}{\Large\bfseries\color{primary}}{\thesection}{1em}{}[\vspace{-0.5em}\textcolor{accent}{\rule{\textwidth}{1pt}}]
+\titleformat{\subsection}{\large\bfseries\color{primary!80}}{\thesubsection}{0.8em}{}
+
+% ── Header/footer ──
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{gray}{RetroWrite Reproduction}}
+\fancyhead[R]{\small\textcolor{gray}{SIL7165 -- Mid-Term Report}}
+\fancyfoot[C]{\small\textcolor{gray}{\thepage}}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% ── Compact lists ──
+\setlist{nosep, leftmargin=1.5em}
 
 \title{\textbf{Rewriting Binaries for Bug Hunting: \\ Reproducing RetroWrite for Binary-Only Fuzzing and Sanitization}}
 
@@ -48,7 +85,7 @@ Memory corruption bugs, such as buffer overflows, use-after-free, and out-of-bou
 RetroWrite \cite{retrowrite} solves this problem by taking a clever approach to static binary rewriting. Instead of guessing which values are addresses, RetroWrite uses the \textit{relocation information} that is already present in position-independent code (PIC) binaries. Modern 64-bit Linux binaries are compiled as PIC by default, so this covers most real-world software. RetroWrite reads the binary, uses relocations to figure out exactly which values are addresses, replaces them with symbolic labels (this step is called \textit{symbolization}), and produces a reassembleable assembly file. This assembly file can then be modified to add security checks (like ASan) or coverage tracking (like AFL), and then reassembled into a new working binary. The whole process is done offline (before running the program), so there is no runtime translation overhead.
 
 \subsection{Evaluation}
-The RetroWrite paper shows very strong results. Their AFL instrumentation (called \texttt{afl-retrowrite}) achieves 4.2x to 5.6x higher fuzzing throughput compared to QEMU-based AFL on real-world programs. Their binary ASan (\texttt{ASan-retrowrite}) is 3x faster than Valgrind memcheck and detects 80\% more bugs. On SPEC CPU2006 benchmarks, ASan-retrowrite is only about 0.65x slower than source-level ASan, which is very impressive for a binary-only tool.
+The RetroWrite paper shows very strong results. Their AFL instrumentation (called \texttt{afl-retrowrite}) achieves 4.2x to 5.6x higher fuzzing throughput compared to QEMU-based AFL on real-world programs. Their binary ASan (\texttt{ASan-retrowrite}) is 3x faster than Valgrind memcheck and detects 80\% more bugs. On SPEC CPU2006 benchmarks, ASan-retrowrite incurs only about 65\% runtime overhead, comparable to source-level ASan's 73\% overhead, which is very impressive for a binary-only tool.
 
 \subsection{Takeaway}
 The main takeaway is that for a large and important class of binaries (64-bit PIC), static binary rewriting can be done soundly (without heuristics) by leveraging relocation information. This makes it possible to add source-level security tools like ASan and AFL to closed-source software with near-native performance.
@@ -86,14 +123,14 @@ Table~\ref{tab:related} shows a comparison of existing solutions and their limit
 \toprule
 \textbf{Tool} & \textbf{Type} & \textbf{Sound?} & \textbf{Fast?} & \textbf{Scalable?} & \textbf{Limitations} \\
 \midrule
-QEMU \cite{qemu} & DBT & Yes & No (10--100x) & Yes & Very slow for fuzzing \\
+\rowcolor{rowgray} QEMU \cite{qemu} & DBT & Yes & No (10--100x) & Yes & Very slow for fuzzing \\
 Valgrind \cite{valgrind} & DBT & Yes & No (2--300x) & Yes & Too slow for fuzzing \\
-Intel PIN \cite{pin} & DBT & Yes & No (10--20\%) & Yes & Runtime overhead \\
-DynamoRIO \cite{dynamorio} & DBT & Yes & No (10--20\%) & Yes & Runtime overhead \\
-Uroboros \cite{uroboros} & Static & No & Yes & No & Wrong heuristics, breaks binaries \\
+\rowcolor{rowgray} Intel PIN \cite{pin} & DBT & Yes & No (2--5x) & Yes & Runtime overhead \\
+DynamoRIO \cite{dynamorio} & DBT & Yes & No (2--5x) & Yes & Runtime overhead \\
+\rowcolor{rowgray} Uroboros \cite{uroboros} & Static & No & Yes & No & Wrong heuristics \\
 ramblr \cite{ramblr} & Static & No & Yes & Partial & Still uses heuristics \\
-DynInst \cite{dyninst} & Static & Partial & Yes & Partial & Unsound instrumentation \\
-\textbf{RetroWrite} \cite{retrowrite} & \textbf{Static} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Only 64-bit PIC binaries} \\
+\rowcolor{rowgray} DynInst \cite{dyninst} & Static & Partial & Yes & Partial & Unsound instrumentation \\
+\rowcolor{accent!10} \textbf{RetroWrite} \cite{retrowrite} & \textbf{Static} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Only 64-bit PIC} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -151,7 +188,7 @@ The interaction flow is: Security Analyst provides a target binary to RetroWrite
 \end{enumerate}
 
 % ============================================================
-\section{Proposed Solution}
+\section{RetroWrite Design}
 % ============================================================
 
 RetroWrite proposes a static binary rewriting framework that produces reassembleable assembly from 64-bit PIC binaries. The key insight is that PIC binaries contain relocation information that can be used for sound symbolization -- no heuristics needed.
@@ -162,9 +199,29 @@ RetroWrite works in five steps, as shown in Figure~\ref{fig:overview}:
 
 \begin{figure}[H]
 \centering
-\begin{lstlisting}
-Binary --> [1. Preprocessing] --> [2. Symbolization] --> [3. Instrumentation] --> [4. Optimization] --> [5. Reassembly] --> Instrumented Binary
-\end{lstlisting}
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+    node distance=0.4cm,
+    box/.style={draw=accent, fill=accent!8, rounded corners=4pt, minimum height=1cm, minimum width=2.2cm, align=center, font=\small\bfseries},
+    io/.style={draw=primary, fill=primary!12, rounded corners=4pt, minimum height=1cm, minimum width=1.8cm, align=center, font=\small\bfseries},
+    arr/.style={->, thick, color=accent!70, >=stealth}
+]
+\node[io] (input) {Binary};
+\node[box, right=of input] (pre) {1. Pre-\\processing};
+\node[box, right=of pre] (sym) {2. Symbol-\\ization};
+\node[box, right=of sym] (inst) {3. Instru-\\mentation};
+\node[box, right=of inst] (opt) {4. Optim-\\ization};
+\node[box, right=of opt] (asm) {5. Re-\\assembly};
+\node[io, right=of asm] (output) {Instrumented\\Binary};
+
+\draw[arr] (input) -- (pre);
+\draw[arr] (pre) -- (sym);
+\draw[arr] (sym) -- (inst);
+\draw[arr] (inst) -- (opt);
+\draw[arr] (opt) -- (asm);
+\draw[arr] (asm) -- (output);
+\end{tikzpicture}%
+}
 \caption{Overview of the RetroWrite pipeline. The binary goes through five stages to produce an instrumented version.}
 \label{fig:overview}
 \end{figure}
@@ -203,9 +260,9 @@ Table~\ref{tab:asan_policy} shows how ASan-retrowrite handles different memory r
 \toprule
 \textbf{Memory Region} & \textbf{Source ASan} & \textbf{ASan-retrowrite} \\
 \midrule
-Heap & Individual object & Individual object \\
+\rowcolor{rowgray} Heap & Individual object & Individual object \\
 Stack & Individual, 32-byte & Stack-frame, 8-byte \\
-Global & Individual, padded to 64-byte & No redzone \\
+\rowcolor{rowgray} Global & Individual, padded to 64-byte & No redzone \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -238,8 +295,8 @@ We compiled the heap.c demo program as a normal PIE binary, then used RetroWrite
 \toprule
 \textbf{Bug Type} & \textbf{Original Binary} & \textbf{RetroWrite + ASan} \\
 \midrule
-Heap buffer overflow & Not detected (silent) & Detected \\
-Use-after-free & Not detected (silent) & Detected \\
+\rowcolor{rowgray} Heap buffer overflow & \textcolor{danger}{Not detected (silent)} & \textcolor{success}{Detected} \\
+Use-after-free & \textcolor{danger}{Not detected (silent)} & \textcolor{success}{Detected} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -248,17 +305,67 @@ The original binary ran the buggy code without any error. The RetroWrite-instrum
 
 \subsection{Experiment 2: Real-World Binary Rewriting (bzip2)}
 
-We used RetroWrite to rewrite the bzip2 binary (106KB). RetroWrite successfully:
+We used RetroWrite to rewrite the bzip2 binary (105KB). RetroWrite successfully:
 \begin{itemize}
-    \item Disassembled bzip2 into assembly (826KB assembly file)
-    \item Reassembled it into a working binary (102KB)
+    \item Disassembled bzip2 into assembly (807KB assembly file)
+    \item Reassembled it into a working binary (101KB)
     \item The rewritten binary produced \textbf{identical output} to the original when compressing and decompressing files
     \item Also generated an ASan-instrumented version (2.5MB assembly)
 \end{itemize}
 
 This confirms the paper's claim that RetroWrite can handle real-world binaries soundly.
 
-\subsection{Experiment 3: AFL Fuzzing Performance}
+\subsection{Experiment 3: Extended ASan Testing}
+
+We wrote our own test program (\texttt{asan\_test.c}) with four distinct memory bugs to further validate RetroWrite's ASan capabilities beyond the basic demo.
+
+\begin{table}[H]
+\centering
+\caption{Extended ASan detection results on our custom test program}
+\label{tab:asan_extended}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Bug Type} & \textbf{Original Binary} & \textbf{RetroWrite + ASan} \\
+\midrule
+\rowcolor{rowgray} Heap buffer overflow & \textcolor{danger}{Not detected (silent)} & \textcolor{success}{Detected} \\
+Use-after-free & \textcolor{danger}{Not detected (silent)} & \textcolor{success}{Detected} \\
+\rowcolor{rowgray} Stack buffer overflow & \textcolor{danger}{Not detected (crash)} & \textcolor{success}{Detected} \\
+Double free & \textcolor{danger}{Not detected (crash)} & \textcolor{success}{Detected} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Experiment 4: Attack Surface Analysis}
+
+We also performed a systematic attack analysis on our fuzz target program (\texttt{fuzz\_target.c}). We tested 10 different attack types and classified each by whether it was possible, whether the original binary crashed, and whether ASan detected it.
+
+\begin{table}[H]
+\centering
+\caption{Attack surface analysis on fuzz\_target.c}
+\label{tab:attack_analysis}
+\small
+\begin{tabular}{lccc}
+\toprule
+\textbf{Attack Type} & \textbf{Possible?} & \textbf{Original Crashes?} & \textbf{ASan Detects?} \\
+\midrule
+\rowcolor{danger!8} Heap buffer overflow & \textcolor{danger}{Yes} & No (silent corruption) & \textcolor{success}{Yes} \\
+\rowcolor{danger!8} Null pointer deref & \textcolor{danger}{Yes} & Yes (segfault) & \textcolor{success}{Yes} \\
+\rowcolor{danger!8} Stack buffer overflow & \textcolor{danger}{Yes} & Yes (segfault) & \textcolor{success}{Yes} \\
+\midrule
+\rowcolor{rowgray} Format string & No & --- & --- \\
+Use-after-free & No & --- & --- \\
+\rowcolor{rowgray} Double free & No & --- & --- \\
+Integer overflow & No & --- & --- \\
+\rowcolor{rowgray} Command injection & No & --- & --- \\
+Information leak & No & --- & --- \\
+\rowcolor{rowgray} Race condition & No & --- & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+RetroWrite's ASan instrumentation detected all three possible memory safety attacks, including the heap buffer overflow that silently corrupts memory without crashing -- the most dangerous type of bug since the attacker remains undetected.
+
+\subsection{Experiment 5: AFL Fuzzing Performance}
 
 We wrote a custom fuzz target program with intentional bugs (heap overflow, null pointer dereference, stack overflow). We compiled it as a PIE binary, then used RetroWrite to add AFL instrumentation.
 
@@ -266,34 +373,34 @@ We wrote a custom fuzz target program with intentional bugs (heap overflow, null
 \centering
 \caption{Fuzzing throughput comparison}
 \label{tab:fuzz_results}
-\begin{tabular}{lc}
+\begin{tabular}{lcc}
 \toprule
-\textbf{Method} & \textbf{Speed (executions/sec)} \\
+\textbf{Method} & \textbf{Speed (exec/sec)} & \textbf{Source} \\
 \midrule
-Source-level AFL (best possible) & 4790 \\
-RetroWrite AFL (binary-only) & 4244 (88.6\%) \\
-QEMU AFL (reported in paper) & $\sim$800 \\
+\rowcolor{rowgray} Source-level AFL (best possible) & 4790 & Our measurement \\
+\rowcolor{accent!10} \textbf{RetroWrite AFL (binary-only)} & \textbf{4244 (88.6\%)} & Our measurement \\
+\rowcolor{rowgray} QEMU AFL & $\sim$800 & Reported in paper \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-RetroWrite achieved 88.6\% of source-level AFL speed without needing the source code. This is consistent with the paper's claim of near-native performance. The QEMU-based approach is roughly 5x slower.
+RetroWrite achieved 88.6\% of source-level AFL speed without needing the source code. This is consistent with the paper's claim of near-native performance. Note that the QEMU AFL figure is from the original paper, as we did not set up QEMU-based fuzzing. The QEMU-based approach is roughly 5x slower.
 
 \subsection{Comparison with Existing Solutions}
 
 \begin{table}[H]
 \centering
-\caption{Quantitative comparison with existing solutions}
+\caption{Quantitative comparison with existing solutions (overhead figures from the RetroWrite paper \cite{retrowrite})}
 \label{tab:comparison}
 \begin{tabular}{lccc}
 \toprule
 \textbf{Tool} & \textbf{Needs Source?} & \textbf{Runtime Overhead} & \textbf{Bug Detection} \\
 \midrule
-Source ASan & Yes & 1.65x & Best \\
-RetroWrite ASan & No & 1.65x (approx) & Good (80\% of source ASan) \\
-Valgrind memcheck & No & 20--300x & Lower \\
+\rowcolor{rowgray} Source ASan & Yes & 1.73x & Best \\
+\rowcolor{accent!10} \textbf{RetroWrite ASan} & \textbf{No} & \textbf{1.65x} & \textbf{Good} \\
+\rowcolor{rowgray} Valgrind memcheck & No & 20--300x & Lower \\
 QEMU + AFL & No & 10--100x & Low throughput \\
-RetroWrite + AFL & No & $\sim$1x & Near source-level \\
+\rowcolor{accent!10} \textbf{RetroWrite + AFL} & \textbf{No} & $\boldsymbol{\sim}$\textbf{1x} & \textbf{Near source-level} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -311,7 +418,7 @@ The RetroWrite paper explicitly mentions that \texttt{rep movsb} and \texttt{rep
 The RetroWrite repository has an AFL coverage pass for ARM64 but not for x64. We plan to create a standalone coverage pass for x64 that inserts \texttt{inc byte [bitmap + BLOCK\_ID]} at each basic block. This will be useful for coverage measurement without needing the full AFL setup.
 
 \subsection{Extension 3: Stack Canary Insertion}
-We plan to add a pass that inserts stack canaries into binaries that were compiled without \texttt{-fstack-protector}. At function entry, a random canary value is pushed onto the stack. Before every \texttt{ret} instruction, the canary is checked. If it has been overwritten (indicating a stack buffer overflow), the program aborts.
+We plan to add a pass that inserts stack canaries into binaries compiled without \mbox{\texttt{-fstack-protector}}. At function entry, a random canary value is pushed onto the stack. Before every \texttt{ret} instruction, the canary is checked. If it has been overwritten (indicating a stack buffer overflow), the program aborts.
 
 \subsection{Evaluation Plan}
 We will evaluate these extensions by:
@@ -326,11 +433,11 @@ We will evaluate these extensions by:
 \section{Conclusion}
 % ============================================================
 
-In this project, we studied and reproduced the RetroWrite paper, which presents a static binary rewriting framework for adding security instrumentation to closed-source binaries. RetroWrite uses relocation information in 64-bit PIC binaries to perform sound symbolization, avoiding the heuristic-based approaches of prior tools. We successfully set up RetroWrite, tested its ASan instrumentation on demo programs (detecting heap overflows and use-after-free bugs), rewrote a real-world binary (bzip2) with correct output, and measured AFL fuzzing throughput at 88.6\% of source-level speed. Our results confirm the paper's key claims. For the endterm, we plan to extend RetroWrite by fixing the rep prefix ASan limitation, adding a standalone coverage pass, and implementing stack canary insertion.
+In this project, we studied and reproduced the RetroWrite paper, which presents a static binary rewriting framework for adding security instrumentation to closed-source binaries. RetroWrite uses relocation information in 64-bit PIC binaries to perform sound symbolization, avoiding the heuristic-based approaches of prior tools. We successfully set up RetroWrite, tested its ASan instrumentation on both demo and custom programs (detecting heap overflows, use-after-free, stack overflows, and double free bugs), performed a systematic attack surface analysis across 10 attack types, rewrote a real-world binary (bzip2) with correct output, and measured AFL fuzzing throughput at 88.6\% of source-level speed. Our results confirm the paper's key claims. For the endterm, we plan to extend RetroWrite by fixing the rep prefix ASan limitation, adding a standalone coverage pass, and implementing stack canary insertion.
 
 % ============================================================
 \bibliographystyle{IEEEtran}
-\begin{thebibliography}{15}
+\begin{thebibliography}{13}
 
 \bibitem{retrowrite}
 S.~Dinesh, N.~Burow, D.~Xu, and M.~Payer, ``RetroWrite: Statically Instrumenting COTS Binaries for Fuzzing and Sanitization,'' in \textit{Proc. IEEE Symposium on Security and Privacy (S\&P)}, 2020, pp.~1497--1511.
@@ -371,11 +478,6 @@ Hex-Rays, ``IDA Pro Disassembler,'' [Online]. Available: \url{https://hex-rays.c
 \bibitem{radare2}
 S.~Alvarez, ``radare2: UNIX-like reverse engineering framework,'' [Online]. Available: \url{https://rada.re/n/radare2.html}
 
-\bibitem{angr}
-Y.~Shoshitaishvili et al., ``SoK: (State of) The Art of War: Offensive Techniques in Binary Analysis,'' in \textit{Proc. IEEE Symposium on Security and Privacy (S\&P)}, 2016.
-
-\bibitem{cfi}
-M.~Abadi, M.~Budiu, U.~Erlingsson, and J.~Ligatti, ``Control-Flow Integrity: Principles, Implementations, and Applications,'' in \textit{ACM Transactions on Information and System Security (TISSEC)}, 2009.
 
 \end{thebibliography}
 
