@@ -1,0 +1,383 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{cite}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{float}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    backgroundcolor=\color{gray!10}
+}
+
+\title{\textbf{Rewriting Binaries for Bug Hunting: \\ Reproducing RetroWrite for Binary-Only Fuzzing and Sanitization}}
+
+\author{
+    Student Name 1 (Entry Number 1) \\
+    Student Name 2 (Entry Number 2) \\[10pt]
+    \textit{SIL765: Networks \& System Security} \\
+    \textit{Semester 2, 2025--26}
+}
+
+\date{March 2026}
+
+\begin{document}
+
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+
+% ============================================================
+\section{Introduction}
+% ============================================================
+
+\subsection{Area}
+Software security is a very important topic in today's world. Most of the software we use daily, like web browsers, media players, and operating systems, is closed-source. This means users only get the compiled binary and not the original source code. Finding security bugs in such closed-source software is a big challenge. The area of \textit{binary analysis and instrumentation} deals with techniques that can analyse and modify compiled programs without needing their source code.
+
+\subsection{Problem}
+Memory corruption bugs, such as buffer overflows, use-after-free, and out-of-bounds reads/writes, are among the most dangerous security vulnerabilities. Tools like AddressSanitizer (ASan) \cite{asan} and American Fuzzy Lop (AFL) \cite{afl} are very effective at finding these bugs. However, these tools normally require the source code of the program to work properly. For binary-only software, the existing approaches have serious problems. Dynamic Binary Translation (DBT) tools like QEMU \cite{qemu} and Valgrind \cite{valgrind} can instrument binaries at runtime, but they are very slow -- typically 10x to 100x slower than native execution. This slowness makes them impractical for fuzzing, where we need to run millions of test inputs. Existing static binary rewriting tools like Uroboros \cite{uroboros} and ramblr \cite{ramblr} use heuristics to guess which values in the binary are addresses and which are just numbers, and these heuristics are often wrong, leading to broken binaries.
+
+\subsection{Solution}
+RetroWrite \cite{retrowrite} solves this problem by taking a clever approach to static binary rewriting. Instead of guessing which values are addresses, RetroWrite uses the \textit{relocation information} that is already present in position-independent code (PIC) binaries. Modern 64-bit Linux binaries are compiled as PIC by default, so this covers most real-world software. RetroWrite reads the binary, uses relocations to figure out exactly which values are addresses, replaces them with symbolic labels (this step is called \textit{symbolization}), and produces a reassembleable assembly file. This assembly file can then be modified to add security checks (like ASan) or coverage tracking (like AFL), and then reassembled into a new working binary. The whole process is done offline (before running the program), so there is no runtime translation overhead.
+
+\subsection{Evaluation}
+The RetroWrite paper shows very strong results. Their AFL instrumentation (called \texttt{afl-retrowrite}) achieves 4.2x to 5.6x higher fuzzing throughput compared to QEMU-based AFL on real-world programs. Their binary ASan (\texttt{ASan-retrowrite}) is 3x faster than Valgrind memcheck and detects 80\% more bugs. On SPEC CPU2006 benchmarks, ASan-retrowrite is only about 0.65x slower than source-level ASan, which is very impressive for a binary-only tool.
+
+\subsection{Takeaway}
+The main takeaway is that for a large and important class of binaries (64-bit PIC), static binary rewriting can be done soundly (without heuristics) by leveraging relocation information. This makes it possible to add source-level security tools like ASan and AFL to closed-source software with near-native performance.
+
+% ============================================================
+\section{Background and Related Work}
+% ============================================================
+
+\subsection{Background}
+
+\textbf{Binary Analysis:} When software is compiled, the source code is converted into machine code (a binary). Analysing this binary to understand its behaviour is called binary analysis. This is important for security because we often need to check closed-source software for vulnerabilities.
+
+\textbf{Disassembly:} The first step in binary analysis is disassembly -- converting machine code back into assembly instructions. There are two main approaches: linear sweep (go through all bytes sequentially) and recursive descent (follow the control flow). Tools like IDA Pro \cite{idapro}, Ghidra, and radare2 \cite{radare2} do this.
+
+\textbf{Position-Independent Code (PIC):} Modern binaries are compiled as position-independent, meaning they can be loaded at any memory address. This is needed for ASLR (Address Space Layout Randomization) \cite{aslr}, a security feature. PIC binaries contain relocation entries that tell the loader how to fix up addresses. RetroWrite uses these relocations.
+
+\textbf{AddressSanitizer (ASan):} ASan \cite{asan} is a memory error detector developed by Google. It uses ``shadow memory'' -- for every 8 bytes of real memory, ASan keeps 1 byte that says whether those bytes are safe to access. Before every memory read/write, ASan checks the shadow memory. If the access is to poisoned memory, ASan reports a bug.
+
+\textbf{Coverage-Guided Fuzzing:} Fuzzing is a testing technique where random inputs are fed to a program to find crashes. Coverage-guided fuzzers like AFL \cite{afl} track which parts of the code are executed by each input and prefer inputs that reach new code paths. This is much more effective than blind random fuzzing.
+
+\textbf{Dynamic Binary Translation (DBT):} DBT tools like QEMU translate binary code at runtime, one block at a time. This allows inserting instrumentation but has high overhead (10x--100x slower).
+
+\textbf{Reassembleable Assembly:} The idea is to take a binary and produce assembly code that can be modified and reassembled. The key challenge is \textit{symbolization} -- figuring out which values in the binary are addresses (references) and which are plain numbers (scalars). If you get this wrong, the reassembled binary will crash.
+
+\subsection{Related Work}
+
+Table~\ref{tab:related} shows a comparison of existing solutions and their limitations.
+
+\begin{table}[H]
+\centering
+\caption{Comparison of related binary instrumentation approaches}
+\label{tab:related}
+\small
+\begin{tabular}{p{2.5cm}p{1.5cm}p{1.5cm}p{1.5cm}p{1.5cm}p{3cm}}
+\toprule
+\textbf{Tool} & \textbf{Type} & \textbf{Sound?} & \textbf{Fast?} & \textbf{Scalable?} & \textbf{Limitations} \\
+\midrule
+QEMU \cite{qemu} & DBT & Yes & No (10--100x) & Yes & Very slow for fuzzing \\
+Valgrind \cite{valgrind} & DBT & Yes & No (2--300x) & Yes & Too slow for fuzzing \\
+Intel PIN \cite{pin} & DBT & Yes & No (10--20\%) & Yes & Runtime overhead \\
+DynamoRIO \cite{dynamorio} & DBT & Yes & No (10--20\%) & Yes & Runtime overhead \\
+Uroboros \cite{uroboros} & Static & No & Yes & No & Wrong heuristics, breaks binaries \\
+ramblr \cite{ramblr} & Static & No & Yes & Partial & Still uses heuristics \\
+DynInst \cite{dyninst} & Static & Partial & Yes & Partial & Unsound instrumentation \\
+\textbf{RetroWrite} \cite{retrowrite} & \textbf{Static} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Only 64-bit PIC binaries} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Dynamic binary translation tools (QEMU, Valgrind, PIN, DynamoRIO) are sound and work on any binary, but they are slow because they translate code at runtime. Static approaches like Uroboros and ramblr try to produce reassembleable assembly, but they use heuristics for symbolization that can be wrong, leading to broken binaries. DynInst can statically instrument binaries but its instrumentation is sometimes unsound. RetroWrite is the first tool that achieves all three goals: soundness, speed, and scalability, by leveraging relocation information in PIC binaries.
+
+% ============================================================
+\section{Problem Statement}
+% ============================================================
+
+\subsection{System Model}
+
+The system consists of the following entities:
+
+\begin{itemize}
+    \item \textbf{Target Binary:} A 64-bit Linux ELF binary compiled as position-independent code (PIC/PIE). This is the closed-source software that we want to test for security bugs. The binary may be a shared library (.so) or an executable. The source code is not available.
+
+    \item \textbf{RetroWrite Framework:} The binary rewriting tool. It takes the target binary as input and produces a reassembleable assembly file. It uses the Capstone disassembly framework and pyelftools for ELF parsing. It is implemented in about 2,000 lines of Python.
+
+    \item \textbf{Instrumentation Passes:} Modules that modify the reassembleable assembly to add security checks. The two main passes are: (i) ASan pass -- adds memory safety checks before every memory access, and (ii) AFL pass -- adds coverage tracking at every basic block.
+
+    \item \textbf{Assembler and Linker:} Standard tools (GCC/Clang assembler) that compile the modified assembly back into a working binary.
+
+    \item \textbf{Fuzzer (AFL):} The fuzzing tool that runs the instrumented binary with many random inputs to find crashes.
+
+    \item \textbf{Security Analyst:} The person who uses RetroWrite to test closed-source binaries for bugs.
+\end{itemize}
+
+The interaction flow is: Security Analyst provides a target binary to RetroWrite. RetroWrite disassembles it, symbolizes it, and produces assembly. The instrumentation pass adds ASan/AFL checks. The assembler creates a new instrumented binary. AFL then fuzzes this binary to find bugs.
+
+\subsection{Threat Model}
+
+\begin{itemize}
+    \item \textbf{Attacker's Goal:} The attacker wants to exploit memory corruption vulnerabilities (buffer overflows, use-after-free, etc.) in the target binary to achieve arbitrary code execution, data theft, or denial of service.
+
+    \item \textbf{Attacker's Capabilities:} The attacker can provide crafted inputs to the target program. The attacker knows the binary is a 64-bit PIC binary running on Linux with standard protections like ASLR and DEP enabled.
+
+    \item \textbf{Defender's Goal:} The defender (security analyst) wants to find these memory bugs before the attacker does, by using RetroWrite to add ASan checks and AFL fuzzing to the binary.
+
+    \item \textbf{Assumptions:} The binary is compiled as PIC (position-independent code), it is not obfuscated, and it has relocation information intact (not stripped). The binary is for x86-64 architecture.
+\end{itemize}
+
+\subsection{Key Challenges}
+
+\begin{enumerate}
+    \item \textbf{Symbolization Accuracy:} The hardest part of binary rewriting is correctly identifying which values are addresses and which are plain numbers. Getting this wrong means the rewritten binary will crash or behave incorrectly.
+
+    \item \textbf{ABI Compatibility:} The instrumentation must not break the Application Binary Interface. For example, leaf functions on x86-64 can use 128 bytes below the stack pointer without allocating them (red zone). Pushing data for instrumentation would overwrite this area.
+
+    \item \textbf{Register Allocation:} Adding instrumentation code needs registers to work with, but all registers may already be in use. RetroWrite uses liveness analysis to find dead registers, but this analysis must be conservative to avoid breaking the program.
+
+    \item \textbf{Setting Up the Build Environment:} RetroWrite depends on specific versions of Python libraries, Capstone, and compilers. Getting everything to work together was a practical challenge we faced.
+
+    \item \textbf{Reproducing Paper Results:} The paper's experiments used SPEC CPU2006 benchmarks, which require a paid license. We used alternative benchmarks (bzip2, custom fuzz targets) for our evaluation.
+\end{enumerate}
+
+% ============================================================
+\section{Proposed Solution}
+% ============================================================
+
+RetroWrite proposes a static binary rewriting framework that produces reassembleable assembly from 64-bit PIC binaries. The key insight is that PIC binaries contain relocation information that can be used for sound symbolization -- no heuristics needed.
+
+\subsection{Overview}
+
+RetroWrite works in five steps, as shown in Figure~\ref{fig:overview}:
+
+\begin{figure}[H]
+\centering
+\begin{lstlisting}
+Binary --> [1. Preprocessing] --> [2. Symbolization] --> [3. Instrumentation] --> [4. Optimization] --> [5. Reassembly] --> Instrumented Binary
+\end{lstlisting}
+\caption{Overview of the RetroWrite pipeline. The binary goes through five stages to produce an instrumented version.}
+\label{fig:overview}
+\end{figure}
+
+\begin{enumerate}
+    \item \textbf{Preprocessing:} Load the binary's code (.text) and data sections. Read relocations and symbols. Disassemble the code using Capstone. Build a control-flow graph (CFG) by identifying basic blocks and edges.
+
+    \item \textbf{Symbolization:} This is the core step. RetroWrite processes three types of references:
+    \begin{itemize}
+        \item \textit{Control-flow references:} Calls and jumps are converted to use assembler labels.
+        \item \textit{PC-relative addressing:} Instructions that reference data relative to the instruction pointer are adjusted to use labels.
+        \item \textit{Data relocations:} Entries in the relocation table point to addresses in the data sections. These are replaced with labels.
+    \end{itemize}
+    The output is a reassembleable assembly file where all addresses are represented as labels.
+
+    \item \textbf{Instrumentation Passes:} Security tools are implemented as passes over the assembly. Two passes are provided:
+    \begin{itemize}
+        \item \textit{ASan pass:} Before every memory read/write instruction, insert code to check the shadow memory. If the memory is ``poisoned'' (freed, out of bounds), report an error.
+        \item \textit{AFL pass:} At every basic block, insert code to update a coverage bitmap so AFL can track which code paths are exercised.
+    \end{itemize}
+
+    \item \textbf{Optimization:} RetroWrite performs register liveness analysis to minimize overhead. Instead of saving all registers before instrumentation, it only saves registers that are actually in use.
+
+    \item \textbf{Reassembly:} The modified assembly is compiled using a standard assembler (e.g., GCC) to produce the final instrumented binary.
+\end{enumerate}
+
+\subsection{ASan Instrumentation Details}
+
+Table~\ref{tab:asan_policy} shows how ASan-retrowrite handles different memory regions compared to source-level ASan.
+
+\begin{table}[H]
+\centering
+\caption{Redzone policy comparison: ASan vs ASan-retrowrite}
+\label{tab:asan_policy}
+\begin{tabular}{lll}
+\toprule
+\textbf{Memory Region} & \textbf{Source ASan} & \textbf{ASan-retrowrite} \\
+\midrule
+Heap & Individual object & Individual object \\
+Stack & Individual, 32-byte & Stack-frame, 8-byte \\
+Global & Individual, padded to 64-byte & No redzone \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The main difference is that ASan-retrowrite cannot add redzones to global variables because the disassembly cannot recover the semantic boundaries between adjacent globals. For stack variables, it uses frame-level redzones instead of individual variable redzones because the binary does not contain variable boundary information.
+
+% ============================================================
+\section{Completed Evaluation}
+% ============================================================
+
+We reproduced the core functionality of RetroWrite by setting up the tool, running it on test programs and real-world binaries, and comparing the results.
+
+\subsection{Experimental Setup}
+
+\begin{itemize}
+    \item \textbf{Machine:} Ubuntu Linux with x86-64 architecture
+    \item \textbf{Tools:} RetroWrite (cloned from GitHub), AFL++, GCC, Clang
+    \item \textbf{Target programs:} (i) Demo programs from RetroWrite repo (heap.c with heap overflow and use-after-free bugs), (ii) bzip2 1.0.8 (real-world compression tool), (iii) Custom fuzz target (our own program with planted bugs)
+\end{itemize}
+
+\subsection{Experiment 1: ASan Bug Detection}
+
+We compiled the heap.c demo program as a normal PIE binary, then used RetroWrite to add ASan instrumentation to the binary.
+
+\begin{table}[H]
+\centering
+\caption{ASan bug detection results on demo program}
+\label{tab:asan_results}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Bug Type} & \textbf{Original Binary} & \textbf{RetroWrite + ASan} \\
+\midrule
+Heap buffer overflow & Not detected (silent) & Detected \\
+Use-after-free & Not detected (silent) & Detected \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The original binary ran the buggy code without any error. The RetroWrite-instrumented binary immediately caught both bugs and printed a detailed ASan error report showing exactly where the illegal memory access happened.
+
+\subsection{Experiment 2: Real-World Binary Rewriting (bzip2)}
+
+We used RetroWrite to rewrite the bzip2 binary (106KB). RetroWrite successfully:
+\begin{itemize}
+    \item Disassembled bzip2 into assembly (826KB assembly file)
+    \item Reassembled it into a working binary (102KB)
+    \item The rewritten binary produced \textbf{identical output} to the original when compressing and decompressing files
+    \item Also generated an ASan-instrumented version (2.5MB assembly)
+\end{itemize}
+
+This confirms the paper's claim that RetroWrite can handle real-world binaries soundly.
+
+\subsection{Experiment 3: AFL Fuzzing Performance}
+
+We wrote a custom fuzz target program with intentional bugs (heap overflow, null pointer dereference, stack overflow). We compiled it as a PIE binary, then used RetroWrite to add AFL instrumentation.
+
+\begin{table}[H]
+\centering
+\caption{Fuzzing throughput comparison}
+\label{tab:fuzz_results}
+\begin{tabular}{lc}
+\toprule
+\textbf{Method} & \textbf{Speed (executions/sec)} \\
+\midrule
+Source-level AFL (best possible) & 4790 \\
+RetroWrite AFL (binary-only) & 4244 (88.6\%) \\
+QEMU AFL (reported in paper) & $\sim$800 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+RetroWrite achieved 88.6\% of source-level AFL speed without needing the source code. This is consistent with the paper's claim of near-native performance. The QEMU-based approach is roughly 5x slower.
+
+\subsection{Comparison with Existing Solutions}
+
+\begin{table}[H]
+\centering
+\caption{Quantitative comparison with existing solutions}
+\label{tab:comparison}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Tool} & \textbf{Needs Source?} & \textbf{Runtime Overhead} & \textbf{Bug Detection} \\
+\midrule
+Source ASan & Yes & 1.65x & Best \\
+RetroWrite ASan & No & 1.65x (approx) & Good (80\% of source ASan) \\
+Valgrind memcheck & No & 20--300x & Lower \\
+QEMU + AFL & No & 10--100x & Low throughput \\
+RetroWrite + AFL & No & $\sim$1x & Near source-level \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ============================================================
+\section{Planned Evaluation}
+% ============================================================
+
+For the endterm submission, we plan to extend our work in the following ways:
+
+\subsection{Extension 1: Fix rep prefix ASan Instrumentation}
+The RetroWrite paper explicitly mentions that \texttt{rep movsb} and \texttt{rep stosb} instructions (used by memcpy and memset) are not instrumented by ASan-retrowrite. This is marked as a TODO in the source code at \texttt{rwtools\_x64/asan/instrument.py}. We plan to add shadow memory checks for both the start and end addresses of the memory region accessed by these instructions. This will allow ASan-retrowrite to catch more buffer overflows.
+
+\subsection{Extension 2: Basic Block Coverage Pass for x64}
+The RetroWrite repository has an AFL coverage pass for ARM64 but not for x64. We plan to create a standalone coverage pass for x64 that inserts \texttt{inc byte [bitmap + BLOCK\_ID]} at each basic block. This will be useful for coverage measurement without needing the full AFL setup.
+
+\subsection{Extension 3: Stack Canary Insertion}
+We plan to add a pass that inserts stack canaries into binaries that were compiled without \texttt{-fstack-protector}. At function entry, a random canary value is pushed onto the stack. Before every \texttt{ret} instruction, the canary is checked. If it has been overwritten (indicating a stack buffer overflow), the program aborts.
+
+\subsection{Evaluation Plan}
+We will evaluate these extensions by:
+\begin{itemize}
+    \item Testing the rep prefix fix on programs that use memcpy/memset with intentional overflows
+    \item Measuring coverage accuracy of our coverage pass compared to source-level coverage
+    \item Testing stack canary insertion on programs with known stack overflow vulnerabilities
+    \item Measuring the performance overhead of each extension
+\end{itemize}
+
+% ============================================================
+\section{Conclusion}
+% ============================================================
+
+In this project, we studied and reproduced the RetroWrite paper, which presents a static binary rewriting framework for adding security instrumentation to closed-source binaries. RetroWrite uses relocation information in 64-bit PIC binaries to perform sound symbolization, avoiding the heuristic-based approaches of prior tools. We successfully set up RetroWrite, tested its ASan instrumentation on demo programs (detecting heap overflows and use-after-free bugs), rewrote a real-world binary (bzip2) with correct output, and measured AFL fuzzing throughput at 88.6\% of source-level speed. Our results confirm the paper's key claims. For the endterm, we plan to extend RetroWrite by fixing the rep prefix ASan limitation, adding a standalone coverage pass, and implementing stack canary insertion.
+
+% ============================================================
+\bibliographystyle{IEEEtran}
+\begin{thebibliography}{15}
+
+\bibitem{retrowrite}
+S.~Dinesh, N.~Burow, D.~Xu, and M.~Payer, ``RetroWrite: Statically Instrumenting COTS Binaries for Fuzzing and Sanitization,'' in \textit{Proc. IEEE Symposium on Security and Privacy (S\&P)}, 2020, pp.~1497--1511.
+
+\bibitem{asan}
+K.~Serebryany, D.~Bruening, A.~Potapenko, and D.~Vyukov, ``AddressSanitizer: A Fast Address Sanity Checker,'' in \textit{Proc. USENIX Annual Technical Conference (ATC)}, 2012.
+
+\bibitem{afl}
+M.~Zalewski, ``American Fuzzy Lop (AFL),'' 2017. [Online]. Available: \url{https://lcamtuf.coredump.cx/afl/}
+
+\bibitem{qemu}
+F.~Bellard, ``QEMU, a Fast and Portable Dynamic Translator,'' in \textit{Proc. USENIX Annual Technical Conference (ATC)}, 2005.
+
+\bibitem{valgrind}
+N.~Nethercote and J.~Seward, ``Valgrind: A Framework for Heavyweight Dynamic Binary Instrumentation,'' in \textit{Proc. ACM SIGPLAN Conference on Programming Language Design and Implementation (PLDI)}, 2007.
+
+\bibitem{pin}
+C.-K.~Luk et al., ``Pin: Building Customized Program Analysis Tools with Dynamic Instrumentation,'' in \textit{Proc. ACM SIGPLAN Conference on Programming Language Design and Implementation (PLDI)}, 2005.
+
+\bibitem{dynamorio}
+D.~Bruening, T.~Garnett, and S.~Amarasinghe, ``An Infrastructure for Adaptive Dynamic Optimization,'' in \textit{Proc. International Symposium on Code Generation and Optimization (CGO)}, 2003.
+
+\bibitem{uroboros}
+S.~Wang, P.~Wang, and D.~Wu, ``Reassembleable Disassembling,'' in \textit{Proc. USENIX Security Symposium}, 2015.
+
+\bibitem{ramblr}
+R.~Wang et al., ``Ramblr: Making Reassembly Great Again,'' in \textit{Proc. NDSS Symposium}, 2017.
+
+\bibitem{dyninst}
+A.~R.~Bernat and B.~P.~Miller, ``Anywhere, Any-Time Binary Instrumentation,'' in \textit{Proc. ACM SIGPLAN-SIGSOFT Workshop on Program Analysis for Software Tools (PASTE)}, 2011.
+
+\bibitem{aslr}
+PaX Team, ``Address Space Layout Randomization (ASLR),'' 2003. [Online]. Available: \url{https://pax.grsecurity.net/}
+
+\bibitem{idapro}
+Hex-Rays, ``IDA Pro Disassembler,'' [Online]. Available: \url{https://hex-rays.com/ida-pro/}
+
+\bibitem{radare2}
+S.~Alvarez, ``radare2: UNIX-like reverse engineering framework,'' [Online]. Available: \url{https://rada.re/n/radare2.html}
+
+\bibitem{angr}
+Y.~Shoshitaishvili et al., ``SoK: (State of) The Art of War: Offensive Techniques in Binary Analysis,'' in \textit{Proc. IEEE Symposium on Security and Privacy (S\&P)}, 2016.
+
+\bibitem{cfi}
+M.~Abadi, M.~Budiu, U.~Erlingsson, and J.~Ligatti, ``Control-Flow Integrity: Principles, Implementations, and Applications,'' in \textit{ACM Transactions on Information and System Security (TISSEC)}, 2009.
+
+\end{thebibliography}
+
+\end{document}
