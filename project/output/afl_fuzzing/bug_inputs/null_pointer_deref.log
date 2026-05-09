@@ -1,0 +1,14 @@
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==2635509==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000000 (pc 0x59ee41ea7c68 bp 0x7ffff4da9630 sp 0x7ffff4da94e0 T0)
+==2635509==The signal is caused by a WRITE memory access.
+==2635509==Hint: address points to the zero page.
+    #0 0x59ee41ea7c68 in process_input (/home/hobbbit31/Desktop/NSS/project/output/afl_fuzzing/fuzz_target_asan_check+0x104c68) (BuildId: d7180c831955a9b088eb01951c8fefda8be849cc)
+    #1 0x59ee41ea7f46 in main (/home/hobbbit31/Desktop/NSS/project/output/afl_fuzzing/fuzz_target_asan_check+0x104f46) (BuildId: d7180c831955a9b088eb01951c8fefda8be849cc)
+    #2 0x7258cb42a1c9 in __libc_start_call_main csu/../sysdeps/nptl/libc_start_call_main.h:58:16
+    #3 0x7258cb42a28a in __libc_start_main csu/../csu/libc-start.c:360:3
+    #4 0x59ee41dce344 in _start (/home/hobbbit31/Desktop/NSS/project/output/afl_fuzzing/fuzz_target_asan_check+0x2b344) (BuildId: d7180c831955a9b088eb01951c8fefda8be849cc)
+
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV (/home/hobbbit31/Desktop/NSS/project/output/afl_fuzzing/fuzz_target_asan_check+0x104c68) (BuildId: d7180c831955a9b088eb01951c8fefda8be849cc) in process_input
+==2635509==ABORTING

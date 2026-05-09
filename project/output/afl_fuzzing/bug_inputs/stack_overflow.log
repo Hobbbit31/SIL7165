@@ -1,0 +1,50 @@
+=================================================================
+==2635487==ERROR: AddressSanitizer: stack-buffer-overflow on address 0x7d5210400040 at pc 0x5f3c39e260d8 bp 0x7ffc410e3510 sp 0x7ffc410e2cd0
+WRITE of size 40 at 0x7d5210400040 thread T0
+    #0 0x5f3c39e260d7 in __asan_memcpy (/home/hobbbit31/Desktop/NSS/project/output/afl_fuzzing/fuzz_target_asan_check+0xc40d7) (BuildId: d7180c831955a9b088eb01951c8fefda8be849cc)
+    #1 0x5f3c39e66d24 in process_input (/home/hobbbit31/Desktop/NSS/project/output/afl_fuzzing/fuzz_target_asan_check+0x104d24) (BuildId: d7180c831955a9b088eb01951c8fefda8be849cc)
+    #2 0x5f3c39e66f46 in main (/home/hobbbit31/Desktop/NSS/project/output/afl_fuzzing/fuzz_target_asan_check+0x104f46) (BuildId: d7180c831955a9b088eb01951c8fefda8be849cc)
+    #3 0x7d521222a1c9 in __libc_start_call_main csu/../sysdeps/nptl/libc_start_call_main.h:58:16
+    #4 0x7d521222a28a in __libc_start_main csu/../csu/libc-start.c:360:3
+    #5 0x5f3c39d8d344 in _start (/home/hobbbit31/Desktop/NSS/project/output/afl_fuzzing/fuzz_target_asan_check+0x2b344) (BuildId: d7180c831955a9b088eb01951c8fefda8be849cc)
+
+Address 0x7d5210400040 is located in stack of thread T0 at offset 64 in frame
+    #0 0x5f3c39e6673f in process_input (/home/hobbbit31/Desktop/NSS/project/output/afl_fuzzing/fuzz_target_asan_check+0x10473f) (BuildId: d7180c831955a9b088eb01951c8fefda8be849cc)
+
+  This frame has 1 object(s):
+    [32, 64) 'local' <== Memory access at offset 64 overflows this variable
+HINT: this may be a false positive if your program uses some custom stack unwind mechanism, swapcontext or vfork
+      (longjmp and C++ exceptions *are* supported)
+SUMMARY: AddressSanitizer: stack-buffer-overflow (/home/hobbbit31/Desktop/NSS/project/output/afl_fuzzing/fuzz_target_asan_check+0xc40d7) (BuildId: d7180c831955a9b088eb01951c8fefda8be849cc) in __asan_memcpy
+Shadow bytes around the buggy address:
+  0x7d52103ffd80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x7d52103ffe00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x7d52103ffe80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x7d52103fff00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x7d52103fff80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x7d5210400000: f1 f1 f1 f1 00 00 00 00[f3]f3 f3 f3 00 00 00 00
+  0x7d5210400080: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x7d5210400100: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x7d5210400180: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x7d5210400200: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x7d5210400280: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==2635487==ABORTING

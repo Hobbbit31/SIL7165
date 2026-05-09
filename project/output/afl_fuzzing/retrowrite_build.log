@@ -1,0 +1,12 @@
+Rewriting /home/hobbbit31/Desktop/NSS/project/output/afl_fuzzing/fuzz_target into /home/hobbbit31/Desktop/NSS/project/output/afl_fuzzing/fuzz_target.s
+IDENTIFIED IMPORTS
+.init_array frame_dummy pointer removed.
+[*] Relocations for a section that's not loaded:.rela.dyn
+[*] Relocations for a section that's not loaded:.rela.plt
+[x] Couldn't find valid section 3dd0
+[x] Couldn't find valid section 3fb8
+[x] Couldn't find valid section 3fc0
+[x] Couldn't find valid section 3fc8
+[x] Couldn't find valid section 3fd0
+[x] Couldn't find valid section 3fd8
+[x] Couldn't find valid section 3fe0

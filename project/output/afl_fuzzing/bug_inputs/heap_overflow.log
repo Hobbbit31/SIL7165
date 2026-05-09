@@ -1,0 +1,52 @@
+=================================================================
+==2635497==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x502000000018 at pc 0x576540ca70d8 bp 0x7ffc6addf2f0 sp 0x7ffc6addeab0
+WRITE of size 13 at 0x502000000018 thread T0
+    #0 0x576540ca70d7 in __asan_memcpy (/home/hobbbit31/Desktop/NSS/project/output/afl_fuzzing/fuzz_target_asan_check+0xc40d7) (BuildId: d7180c831955a9b088eb01951c8fefda8be849cc)
+    #1 0x576540ce7a0a in process_input (/home/hobbbit31/Desktop/NSS/project/output/afl_fuzzing/fuzz_target_asan_check+0x104a0a) (BuildId: d7180c831955a9b088eb01951c8fefda8be849cc)
+    #2 0x576540ce7f46 in main (/home/hobbbit31/Desktop/NSS/project/output/afl_fuzzing/fuzz_target_asan_check+0x104f46) (BuildId: d7180c831955a9b088eb01951c8fefda8be849cc)
+    #3 0x70c11202a1c9 in __libc_start_call_main csu/../sysdeps/nptl/libc_start_call_main.h:58:16
+    #4 0x70c11202a28a in __libc_start_main csu/../csu/libc-start.c:360:3
+    #5 0x576540c0e344 in _start (/home/hobbbit31/Desktop/NSS/project/output/afl_fuzzing/fuzz_target_asan_check+0x2b344) (BuildId: d7180c831955a9b088eb01951c8fefda8be849cc)
+
+0x502000000018 is located 0 bytes after 8-byte region [0x502000000010,0x502000000018)
+allocated by thread T0 here:
+    #0 0x576540ca9193 in malloc (/home/hobbbit31/Desktop/NSS/project/output/afl_fuzzing/fuzz_target_asan_check+0xc6193) (BuildId: d7180c831955a9b088eb01951c8fefda8be849cc)
+    #1 0x576540ce79e9 in process_input (/home/hobbbit31/Desktop/NSS/project/output/afl_fuzzing/fuzz_target_asan_check+0x1049e9) (BuildId: d7180c831955a9b088eb01951c8fefda8be849cc)
+    #2 0x576540ce7f46 in main (/home/hobbbit31/Desktop/NSS/project/output/afl_fuzzing/fuzz_target_asan_check+0x104f46) (BuildId: d7180c831955a9b088eb01951c8fefda8be849cc)
+    #3 0x70c11202a1c9 in __libc_start_call_main csu/../sysdeps/nptl/libc_start_call_main.h:58:16
+    #4 0x70c11202a28a in __libc_start_main csu/../csu/libc-start.c:360:3
+    #5 0x576540c0e344 in _start (/home/hobbbit31/Desktop/NSS/project/output/afl_fuzzing/fuzz_target_asan_check+0x2b344) (BuildId: d7180c831955a9b088eb01951c8fefda8be849cc)
+
+SUMMARY: AddressSanitizer: heap-buffer-overflow (/home/hobbbit31/Desktop/NSS/project/output/afl_fuzzing/fuzz_target_asan_check+0xc40d7) (BuildId: d7180c831955a9b088eb01951c8fefda8be849cc) in __asan_memcpy
+Shadow bytes around the buggy address:
+  0x501ffffffd80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x501ffffffe00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x501ffffffe80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x501fffffff00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x501fffffff80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x502000000000: fa fa 00[fa]fa fa fa fa fa fa fa fa fa fa fa fa
+  0x502000000080: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x502000000100: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x502000000180: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x502000000200: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x502000000280: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==2635497==ABORTING

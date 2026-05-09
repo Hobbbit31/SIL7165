@@ -1,0 +1,99 @@
+[1;93m[!] [1;97mWARNING: [0mSetting AFL_NO_COLOR has no effect (colors are configured on at compile time)[0m
+[1;92m[+] [0mEnabled environment variable AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES with value 1[0m
+[1;93m[!] [1;97mWARNING: [0mMistyped AFL environment variable: AFL_NO_COLOR=1[0m
+Did you mean AFL_AS?
+Did you mean AFL_CC?
+[1;92m[+] [0mEnabled environment variable AFL_NO_UI with value 1[0m
+[1;92m[+] [0mEnabled environment variable AFL_SKIP_CPUFREQ with value 1[0m
+[0;36mafl-fuzz++4.09c[0m based on afl by Michal Zalewski and a large online community
+[1;92m[+] [0mAFL++ is maintained by Marc "van Hauser" Heuse, Dominik Maier, Andrea Fioraldi and Heiko "hexcoder" Eißfeldt[0m
+[1;92m[+] [0mAFL++ is open source, get it at https://github.com/AFLplusplus/AFLplusplus[0m
+[1;92m[+] [0mNOTE: AFL++ >= v3 has changed defaults and behaviours - see README.md[0m
+[1;92m[+] [0mNo -M/-S set, autoconfiguring for "-S default"[0m
+[1;94m[*] [0mGetting to work...[0m
+[1;92m[+] [0mUsing exponential power schedule (FAST)[0m
+[1;92m[+] [0mEnabled testcache with 50 MB[0m
+[1;92m[+] [0mGenerating fuzz data with a length of min=1 max=1048576[0m
+[1;94m[*] [0mChecking core_pattern...[0m
+
+[1;91m[-] [0mHmm, your system is configured to send core dump notifications to an
+    external utility. This will cause issues: there will be an extended delay
+    between stumbling upon a crash and having this information relayed to the
+    fuzzer via the standard waitpid() API.
+    If you're just testing, set 'AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1'.
+
+    To avoid having crashes misinterpreted as timeouts, please log in as root
+    and temporarily modify /proc/sys/kernel/core_pattern, like so:
+
+    echo core >/proc/sys/kernel/core_pattern
+[1;92m[+] [0mDisabling the UI because AFL_NO_UI is set.[0m
+[1;92m[+] [0mYou have 16 CPU cores and 2 runnable tasks (utilization: 12%).[0m
+[1;92m[+] [0mTry parallel jobs - see docs/fuzzing_in_depth.md#c-using-multiple-cores[0m
+[1;94m[*] [0mSetting up output directories...[0m
+[1;94m[*] [0mChecking CPU core loadout...[0m
+[1;92m[+] [0mFound a free CPU core, try binding to #0.[0m
+[1;94m[*] [0mScanning '/home/hobbbit31/Desktop/NSS/project/output/afl_fuzzing/seeds'...[0m
+[1;92m[+] [0mLoaded a total of 3 seeds.[0m
+[1;94m[*] [0mCreating hard links for all input files...[0m
+[1;94m[*] [0mValidating target binary...[0m
+[1;94m[*] [0mSpinning up the fork server...[0m
+[1;92m[+] [0mAll right - fork server is up.[0m
+[1;94m[*] [0mTarget map size: 65536[0m
+[1;94m[*] [0mNo auto-generated dictionary tokens to reuse.[0m
+[1;94m[*] [0mAttempting dry run with 'id:000000,time:0,execs:0,orig:seed1.txt'...[0m
+[1;90m    len = 6, map size = 2, exec speed = 389 us, hash = 5c81894c5d41e7a3
+[0m[1;94m[*] [0mAttempting dry run with 'id:000001,time:0,execs:0,orig:seed2.txt'...[0m
+[1;90m    len = 5, map size = 2, exec speed = 341 us, hash = 5c81894c5d41e7a3
+[0m[1;93m[!] [1;97mWARNING: [0mNo new instrumentation output, test case may be useless.[0m
+[1;94m[*] [0mAttempting dry run with 'id:000002,time:0,execs:0,orig:seed3.txt'...[0m
+[1;90m    len = 6, map size = 2, exec speed = 332 us, hash = 5c81894c5d41e7a3
+[0m[1;93m[!] [1;97mWARNING: [0mNo new instrumentation output, test case may be useless.[0m
+[1;92m[+] [0mAll test cases processed.[0m
+[1;93m[!] [1;97mWARNING: [0m[1;91mSome test cases look useless. Consider using a smaller set.[0m
+[1;92m[+] [0mHere are some useful stats:
+
+[1;90m    Test case count : [0m1 favored, 0 variable, 2 ignored, 3 total
+[1;90m       Bitmap range : [0m2 to 2 bits (average: 2.00 bits)
+[1;90m        Exec timing : [0m341 to 341 us (average: 354 us)
+[0m
+[1;94m[*] [0mNo -t option specified, so I'll use an exec timeout of 20 ms.[0m
+[1;92m[+] [0mAll set and ready to roll![0m
+[1;94m[*] [0mEntering queue cycle 1.[0m
+[1;94m[*] [0mFuzzing test case #1 (3 total, 0 crashes saved, state: started :-), mode=explore, perf_score=0, weight=0, favorite=1, was_fuzzed=0, exec_us=341, hits=0, map=2, ascii=0, run_time=0:00:00:00)...[0m
+[1;94m[*] [0mFuzzing test case #1 (3 total, 0 crashes saved, state: started :-), mode=explore, perf_score=459, weight=10, favorite=1, was_fuzzed=1, exec_us=341, hits=0, map=2, ascii=0, run_time=0:00:00:00)...[0m
+[1;94m[*] [0mFuzzing test case #1 (3 total, 0 crashes saved, state: started :-), mode=explore, perf_score=459, weight=10, favorite=1, was_fuzzed=1, exec_us=341, hits=0, map=2, ascii=0, run_time=0:00:00:00)...[0m
+[1;94m[*] [0mFuzzing test case #1 (3 total, 0 crashes saved, state: started :-), mode=explore, perf_score=459, weight=10, favorite=1, was_fuzzed=1, exec_us=341, hits=0, map=2, ascii=0, run_time=0:00:00:00)...[0m
+[1;94m[*] [0mFuzzing test case #1 (3 total, 0 crashes saved, state: started :-), mode=explore, perf_score=459, weight=10, favorite=1, was_fuzzed=1, exec_us=341, hits=0, map=2, ascii=0, run_time=0:00:00:01)...[0m
+[1;94m[*] [0mEntering queue cycle 2.[0m
+[1;94m[*] [0mFuzzing test case #1 (3 total, 0 crashes saved, state: started :-), mode=explore, perf_score=459, weight=10, favorite=1, was_fuzzed=1, exec_us=341, hits=0, map=2, ascii=0, run_time=0:00:00:01)...[0m
+[1;94m[*] [0mFuzzing test case #1 (3 total, 0 crashes saved, state: started :-), mode=explore, perf_score=459, weight=10, favorite=1, was_fuzzed=1, exec_us=341, hits=0, map=2, ascii=0, run_time=0:00:00:01)...[0m
+[1;94m[*] [0mFuzzing test case #1 (3 total, 0 crashes saved, state: started :-), mode=explore, perf_score=459, weight=10, favorite=1, was_fuzzed=1, exec_us=341, hits=0, map=2, ascii=0, run_time=0:00:00:01)...[0m
+[1;94m[*] [0mFuzzing test case #1 (3 total, 0 crashes saved, state: started :-), mode=explore, perf_score=459, weight=10, favorite=1, was_fuzzed=1, exec_us=341, hits=0, map=2, ascii=0, run_time=0:00:00:02)...[0m
+[1;94m[*] [0mFuzzing test case #1 (3 total, 0 crashes saved, state: started :-), mode=explore, perf_score=459, weight=10, favorite=1, was_fuzzed=1, exec_us=341, hits=0, map=2, ascii=0, run_time=0:00:00:02)...[0m
+[1;94m[*] [0mEntering queue cycle 3.[0m
+[1;94m[*] [0mFuzzing test case #1 (3 total, 0 crashes saved, state: started :-), mode=explore, perf_score=459, weight=10, favorite=1, was_fuzzed=1, exec_us=341, hits=0, map=2, ascii=0, run_time=0:00:00:02)...[0m
+[1;94m[*] [0mFuzzing test case #1 (3 total, 0 crashes saved, state: started :-), mode=explore, perf_score=459, weight=10, favorite=1, was_fuzzed=1, exec_us=341, hits=0, map=2, ascii=0, run_time=0:00:00:03)...[0m
+[1;94m[*] [0mFuzzing test case #1 (3 total, 0 crashes saved, state: started :-), mode=explore, perf_score=459, weight=10, favorite=1, was_fuzzed=1, exec_us=341, hits=0, map=2, ascii=0, run_time=0:00:00:03)...[0m
+[1;94m[*] [0mFuzzing test case #1 (3 total, 0 crashes saved, state: started :-), mode=explore, perf_score=459, weight=10, favorite=1, was_fuzzed=1, exec_us=341, hits=0, map=2, ascii=0, run_time=0:00:00:03)...[0m
+[1;94m[*] [0mFuzzing test case #1 (3 total, 0 crashes saved, state: started :-), mode=explore, perf_score=459, weight=10, favorite=1, was_fuzzed=1, exec_us=341, hits=0, map=2, ascii=0, run_time=0:00:00:04)...[0m
+[1;94m[*] [0mEntering queue cycle 4.[0m
+[1;94m[*] [0mFuzzing test case #1 (3 total, 0 crashes saved, state: started :-), mode=explore, perf_score=459, weight=10, favorite=1, was_fuzzed=1, exec_us=341, hits=0, map=2, ascii=0, run_time=0:00:00:04)...[0m
+[1;94m[*] [0mFuzzing test case #1 (3 total, 0 crashes saved, state: started :-), mode=explore, perf_score=459, weight=10, favorite=1, was_fuzzed=1, exec_us=341, hits=0, map=2, ascii=0, run_time=0:00:00:04)...[0m
+[1;94m[*] [0mFuzzing test case #1 (3 total, 0 crashes saved, state: started :-), mode=explore, perf_score=459, weight=10, favorite=1, was_fuzzed=1, exec_us=341, hits=0, map=2, ascii=0, run_time=0:00:00:05)...[0m
+[1;94m[*] [0mFuzzing test case #1 (3 total, 0 crashes saved, state: started :-), mode=explore, perf_score=459, weight=10, favorite=1, was_fuzzed=1, exec_us=341, hits=0, map=2, ascii=0, run_time=0:00:00:05)...[0m
+[1;94m[*] [0mFuzzing test case #1 (3 total, 0 crashes saved, state: started :-), mode=explore, perf_score=459, weight=10, favorite=1, was_fuzzed=1, exec_us=341, hits=0, map=2, ascii=0, run_time=0:00:00:05)...[0m
+[1;94m[*] [0mEntering queue cycle 5.[0m
+[1;94m[*] [0mFuzzing test case #1 (3 total, 0 crashes saved, state: started :-), mode=explore, perf_score=459, weight=10, favorite=1, was_fuzzed=1, exec_us=341, hits=0, map=2, ascii=0, run_time=0:00:00:05)...[0m
+[1;94m[*] [0mFuzzing test case #1 (3 total, 0 crashes saved, state: started :-), mode=explore, perf_score=459, weight=10, favorite=1, was_fuzzed=1, exec_us=341, hits=0, map=2, ascii=0, run_time=0:00:00:06)...[0m
+[1;94m[*] [0mFuzzing test case #1 (3 total, 0 crashes saved, state: started :-), mode=explore, perf_score=459, weight=10, favorite=1, was_fuzzed=1, exec_us=341, hits=0, map=2, ascii=0, run_time=0:00:00:06)...[0m
+[1;94m[*] [0mFuzzing test case #1 (3 total, 0 crashes saved, state: started :-), mode=explore, perf_score=459, weight=10, favorite=1, was_fuzzed=1, exec_us=341, hits=0, map=2, ascii=0, run_time=0:00:00:06)...[0m
+[1;94m[*] [0mFuzzing test case #1 (3 total, 0 crashes saved, state: started :-), mode=explore, perf_score=459, weight=10, favorite=1, was_fuzzed=1, exec_us=341, hits=0, map=2, ascii=0, run_time=0:00:00:07)...[0m
+[1;94m[*] [0mEntering queue cycle 6.[0m
+[1;94m[*] [0mFuzzing test case #1 (3 total, 0 crashes saved, state: started :-), mode=explore, perf_score=459, weight=10, favorite=1, was_fuzzed=1, exec_us=341, hits=0, map=2, ascii=0, run_time=0:00:00:07)...[0m
+[1;94m[*] [0mFuzzing test case #1 (3 total, 0 crashes saved, state: started :-), mode=explore, perf_score=459, weight=10, favorite=1, was_fuzzed=1, exec_us=341, hits=0, map=2, ascii=0, run_time=0:00:00:07)...[0m
+[?25h[1;91m
+
++++ Testing aborted by user +++
+[0m[1;94m[*] [0mStatistics: 0 new corpus items found, 0.00% coverage achieved, 0 crashes saved, 0 timeouts saved, total runtime 0 days, 0 hrs, 0 min, 7 sec[0m
+[1;92m[+] [0mWe're done here. Have a nice day!
+[0m
